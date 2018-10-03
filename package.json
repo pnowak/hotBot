@@ -1,0 +1,22 @@
+{
+  "name": "hotBot",
+  "version": "1.0.0",
+  "description": "fetch users from json",
+  "main": "payload.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+"
+  },
+  "keywords": [],
+  "author": "pnowak",
+  "license": "MIT",
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "devDependencies": {},
+  "dependencies": {
+    "node-fetch": "^2.2.0"
+  }
+}

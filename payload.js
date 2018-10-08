@@ -26,12 +26,12 @@ function add(req, res) {
 	req.on('data', (chunk) => {
 		pullRequest += chunk;
 	});
-	req.on('end', async() => {
+	req.on('end', async () => {
 		prs.push(JSON.parse(pullRequest));
 
 		const lastPR = prs[prs.length - 1];
 
-		const branch = checkBaseBranch(lastPR);
+		const branch = await checkBaseBranch(lastPR);
 		const files = await listPRFiles(res, lastPR);
 
 		if (files !== void 0 || branch !== void 0) {
@@ -43,7 +43,7 @@ function add(req, res) {
 	})
 }
 
-function checkBaseBranch(lastPR) {
+async function checkBaseBranch(lastPR) {
 	if (lastPR.pull_request.base.ref === 'master') {
 		return `Never ever make the target of your pull request to the ${lastPR.pull_request.base.ref} branch`;
 	}

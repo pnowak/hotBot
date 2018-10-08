@@ -49,7 +49,7 @@ function checkBaseBranch(lastPR) {
 	}
 }
 
-function listPRFiles(res, lastPR) {
+async function listPRFiles(res, lastPR) {
 	if (lastPR) {
 		const files = `https://api.github.com/repos/${lastPR.repository.owner.login}/${lastPR.repository.name}/pulls/${lastPR.number}/files`;
 

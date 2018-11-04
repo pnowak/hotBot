@@ -26,62 +26,59 @@ function add(req, res) {
 	req.on('data', (chunk) => {
 		pullRequest += chunk;
 	});
-	req.on('end', async () => {
+	req.on('end', () => {
 		prs.push(JSON.parse(pullRequest));
 
 		const lastPR = prs[prs.length - 1];
 
-		const branch = await checkBaseBranch(lastPR);
-		const files = await listPRFiles(res, lastPR);
-
-		if (files !== void 0 || branch !== void 0) {
-			console.log('branch', branch, 'files', files);
-			createPRComment(lastPR, branch, files);
-		}
+		Promise.all([
+       checkBaseBranch(lastPR),
+       listPRFiles(res, lastPR),
+    ]).then((values) => {
+			 createPRComment(lastPR, values);
+		});
 
 		res.end('OK\n');
 	})
 }
 
-async function checkBaseBranch(lastPR) {
+function checkBaseBranch(lastPR) {
 	if (lastPR.pull_request.base.ref === 'master') {
 		return `Never ever make the target of your pull request to the ${lastPR.pull_request.base.ref} branch`;
 	}
 }
 
-async function listPRFiles(res, lastPR) {
+function listPRFiles(res, lastPR) {
 	if (lastPR) {
-		const files = `https://api.github.com/repos/${lastPR.repository.owner.login}/${lastPR.repository.name}/pulls/${lastPR.number}/files`;
+		return fetch(`https://api.github.com/repos/${lastPR.repository.owner.login}/${lastPR.repository.name}/pulls/${lastPR.number}/files`)
+		.then(response => response.json())
+		.then(data => {
+			let messages = [];
 
-		fetch(files)
-			.then(response => response.json())
-			.then(data => {
-				let messages = [];
+			data.forEach(fileObj => {
+				if (!fileObj.filename.includes('test')) {
+					messages.push('Why no test, bro!');
+				}
 
-				data.forEach(fileObj => {
-					if (!fileObj.filename.includes('test')) {
-						messages.push('Why no test, bro!');
-					}
+				if (!fileObj.filename.includes('dist')) {
+					messages.push('Why dist, bro!');
+				}
 
-					if (!fileObj.filename.includes('dist')) {
-						messages.push('Why dist, bro!');
-					}
+				if (fileObj.filename.includes('languages')) {
+					messages.push('Why languages, bro!');
+				}
+			});
 
-					if (fileObj.filename.includes('languages')) {
-						messages.push('Why languages, bro!');
-					}
-				});
-
-				return messages;
-			})
-			.catch(error => console.error(error));
+			return messages;
+		})
+		.catch(error => console.error(error));
 	}
 }
 
 function createPRComment(lastPR, ...comments) {
 	const username = '***';
   const password = '****';
-	const auth = 'Basic ' + new Buffer(username + ':' + password).toString('base64');
+	const auth = 'Basic ' + Buffer.from(`${username}:${password}`, 'ascii').toString('base64');
 
 	if (comments.length) {
 		fetch(`https://api.github.com/repos/${lastPR.repository.owner.login}/${lastPR.repository.name}/issues/${lastPR.number}/comments`, {
@@ -96,6 +93,27 @@ function createPRComment(lastPR, ...comments) {
     .then(json => console.log(json));
 	}
 }
+
+//https://developer.github.com/v3/pulls/#update-a-pull-request
+// function closePR(lastPR) {
+// 	const deleteObject = {
+// 	  'title': 'Close',
+// 	  'body': 'look comment',
+// 	  'state': 'close',
+// 	  'base': 'develop'
+// 	};
+//
+// 	fetch(`https://api.github.com/repos/${lastPR.repository.owner.login}/${lastPR.repository.name}/pulls/${lastPR.number}`, {
+//     method: 'PATCH',
+//     body:    JSON.stringify({ 'body': deleteObject }),
+//     headers: {
+// 			'Content-Type': 'application/json',
+// 			'Authorization': auth,
+// 		},
+//   })
+// 	.then(res => res.json())
+//   .then(json => console.log(json));
+// }
 
 function show(res) {
 	var html = '<html><head><title>List files</title></head><body>'

@@ -17,6 +17,7 @@
   "homepage": "",
   "devDependencies": {},
   "dependencies": {
+    "brightness": "^3.0.0",
     "node-fetch": "^2.2.0"
   }
 }

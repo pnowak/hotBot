@@ -1,5 +1,6 @@
 const http = require('http');
 const fetch = require('node-fetch');
+const brightness = require('brightness');
 const	prs = [];
 
 const server = http.createServer((req, res) => {
@@ -51,27 +52,27 @@ function checkBaseBranch(lastPR) {
 function listPRFiles(res, lastPR) {
 	if (lastPR) {
 		return fetch(`https://api.github.com/repos/${lastPR.repository.owner.login}/${lastPR.repository.name}/pulls/${lastPR.number}/files`)
-		.then(response => response.json())
-		.then(data => {
-			let messages = [];
+			.then(response => response.json())
+			.then(data => {
+				let messages = [];
 
-			data.forEach(fileObj => {
-				if (!fileObj.filename.includes('test')) {
-					messages.push('Why no test, bro!');
-				}
+				data.forEach(fileObj => {
+					if (!fileObj.filename.includes('test')) {
+						messages.push('Why no test, bro!');
+					}
 
-				if (!fileObj.filename.includes('dist')) {
-					messages.push('Why dist, bro!');
-				}
+					if (fileObj.filename.includes('dist')) {
+						messages.push('Why dist, bro!');
+					}
 
-				if (fileObj.filename.includes('languages')) {
-					messages.push('Why languages, bro!');
-				}
-			});
+					if (fileObj.filename.includes('languages')) {
+						messages.push('Why languages, bro!');
+					}
+				});
 
-			return messages;
-		})
-		.catch(error => console.error(error));
+				return messages;
+			})
+			.catch(error => console.error(error));
 	}
 }
 
@@ -89,31 +90,19 @@ function createPRComment(lastPR, ...comments) {
 				'Authorization': auth,
 			},
 	  })
-		.then(res => res.json())
-    .then(json => console.log(json));
+		.then(res => brightness.get())
+		.then(level => {
+			brightness.set(0.1);
+			return level;
+		})
+		.then(level => {
+			setTimeout(() => {
+      	brightness.set(level);
+			}, 5000);
+		})
+		.catch(error => console.error(error));
 	}
 }
-
-//https://developer.github.com/v3/pulls/#update-a-pull-request
-// function closePR(lastPR) {
-// 	const deleteObject = {
-// 	  'title': 'Close',
-// 	  'body': 'look comment',
-// 	  'state': 'close',
-// 	  'base': 'develop'
-// 	};
-//
-// 	fetch(`https://api.github.com/repos/${lastPR.repository.owner.login}/${lastPR.repository.name}/pulls/${lastPR.number}`, {
-//     method: 'PATCH',
-//     body:    JSON.stringify({ 'body': deleteObject }),
-//     headers: {
-// 			'Content-Type': 'application/json',
-// 			'Authorization': auth,
-// 		},
-//   })
-// 	.then(res => res.json())
-//   .then(json => console.log(json));
-// }
 
 function show(res) {
 	var html = '<html><head><title>List files</title></head><body>'
